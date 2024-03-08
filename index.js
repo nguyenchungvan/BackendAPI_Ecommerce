@@ -19,7 +19,7 @@ connectDB();
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
-//Register route
+//Auth route
 const authRouter = require('./routes/authRoute');
 const { notFound, errorHandler } = require('./middlewares/errorNotfound');
 app.use('/api/user',authRouter)
@@ -28,9 +28,31 @@ app.use('/api/user',authRouter)
 const productRoute = require('./routes/productRoute');
 app.use('/api/product',productRoute)
 
+//Blog route
+const blogRoute = require('./routes/blogRoute');
+app.use('/api/blog',blogRoute)
+
+//Category route
+const categoryRoute = require('./routes/categoryRoute');
+app.use('/api/category',categoryRoute)
+
+//Blog category route
+const blogCateRoute = require('./routes/blogCatRoute');
+app.use('/api/blogcate',blogCateRoute)
+
+//Branch route
+const branchRoute = require('./routes/branchRoute');
+app.use('/api/branch', branchRoute)
+
+//Coupon route
+const couponRoute = require('./routes/couponRoute');
+app.use('/api/coupon', couponRoute)
+
 //not found
 app.use(notFound);
 app.use(errorHandler);
+
+
 
 
 

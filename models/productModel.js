@@ -39,16 +39,19 @@ var productSchema = new mongoose.Schema({
         def: 0,
                                //không hiển thị khi truy vấn
     },
-    image: {
-        type: Array,
-    },
+    image: [],
     color: {
         type: String,
         require: true
     },
-    rating: {
+    rating: [{
         star: Number,
+        comment: String,
         postedby: {type: ObjectId, ref: 'User'}
+    }],
+    totalratings: {
+        type: String,
+        default:0
     }
 }, {timestamps: true});
 

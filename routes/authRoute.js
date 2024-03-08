@@ -31,6 +31,17 @@ router.put('/blockuser/:id', authMiddleware.authMiddleware, authMiddleware.isAdm
 //Logout
 router.post('/logout', userControler.logout)
 
+//Update password
+router.put('/updatepassword', authMiddleware.authMiddleware, userControler.updatePassword)
+
+//Forgot password -> send token
+router.post('/forgot-password-token', userControler.forgotPassword)
+
+//Forgot password -> reset password
+router.put('/reset-password/:token', userControler.resetPassword)
+
+
+
 
 module.exports = router;
 

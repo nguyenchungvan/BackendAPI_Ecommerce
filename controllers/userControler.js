@@ -5,8 +5,8 @@ const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
 const validateIDMongo = require('../validatedIDmongoDB/validatedID');
 const jwt = require('jsonwebtoken');
-
-
+const sendEmail = require('./emailControler');
+const crypto = require('crypto')
 
 //tạo user
 const creatUser = asyncHandler( async (req,res) =>{
@@ -96,7 +96,7 @@ const singleUserDel = asyncHandler(async(req,res)=>{
     }
 })
 
-// handle refresh token
+// handle refresh token: dùng để lấy lại access token khi nó hết hạn
 const handlerRefreshToken = asyncHandler(async(req,res)=>{
     const cookie = req.cookies;
     if(!cookie.refreshToken) throw new Error ('No refresh token in cookies');     //kiểm tra xem có refreshtoken trong cookie không
@@ -193,4 +193,66 @@ const Block = asyncHandler(async(req,res)=>{
     }
 })
 
-module.exports = {creatUser, loginUserControler, allUser, singleUser, singleUserDel, singleUserUpdate, Unblock, Block, handlerRefreshToken, logout};
+//Update password
+const updatePassword = asyncHandler(async(req,res)=>{
+    const {id} = req.user;
+    const {password} = req.body;
+    validateIDMongo(id);
+    const user = await User.findById(id);
+    if(password){
+        user.password = password;
+        const updatePassword = await user.save()
+        res.json(updatePassword)
+    }
+    else {
+        res.json(user)
+    }
+})
+
+//Forgot password -> sendemail to create token
+const forgotPassword = asyncHandler(async(req,res)=>{
+    const {email} = req.body;
+    console.log(email)
+    const user = await User.findOne({email});
+    if (!user) throw new Error ('email not match with any user')
+    try {
+        const token = user.createResetPassWorkToken();
+        await user.save();
+        const resetURL = `Please follow this link to reset your password, valid in 5 minutes. <a href='http://localhost:4000/api/user/resetpassword/${token}'>click here</>`;
+        const data = {
+            to: email,
+            text: 'Hello, you forgot password?',
+            subject: 'Forgot password',
+            html: resetURL
+        }
+        sendEmail(data);
+        res.json(token)
+    } catch (error) {
+        throw new Error ('Error')
+    }
+
+})
+
+//reset password
+const resetPassword = asyncHandler(async(req,res)=>{
+    const {password} = req.body
+    const {token} = req.params
+    const hashToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex')
+    const user = User.findOne({
+        passWordResetExpires: {$gt: Date.now()},   //từ ngày hiện tại trở đi 
+        passWordResetToken: hashToken
+    });
+    if (!user) throw new Error ('Token expire')
+    user.password = password;
+    user.passWordResetExpires = undefined;
+    user.passWordResetToken = undefined;
+    await user.save();
+    res.json(user);
+
+})
+
+
+module.exports = {creatUser, loginUserControler, allUser, singleUser, singleUserDel, singleUserUpdate, Unblock, Block, handlerRefreshToken, logout, updatePassword, forgotPassword, resetPassword};
